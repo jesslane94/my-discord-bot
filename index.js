@@ -1,4 +1,4 @@
-const { Client, Events, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
 // require('dotenv/config');
 const { token } = require('./config.json');
 const fs = require('node:fs');
@@ -22,29 +22,19 @@ for (const file of commandFiles) {
 	}
 }
 
-// When the client is ready, run this code (only once)
-client.once(Events.ClientReady, c => {
-	console.log(`Ready! Logged in as ${c.user.tag}`);
-});
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
 
-client.on(Events.InteractionCreate, async interaction => {
-	if (!interaction.isChatInputCommand()) return;
-
-	const command = interaction.client.commands.get(interaction.commandName);
-
-	if (!command) {
-		console.error(`No command matching ${interaction.commandName} was found.`);
-		return;
+for (const file of eventFiles) {
+	const filePath = path.join(eventsPath, file);
+	const event = require(filePath);
+	if (event.once) {
+		client.once(event.name, (...args) => event.execute(...args));
 	}
-
-	try {
-		await command.execute(interaction);
+	else {
+		client.on(event.name, (...args) => event.execute(...args));
 	}
-	catch (error) {
-		console.error(error);
-		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-	}
-});
+}
 
 // client.login(process.env.TOKEN);
 client.login(token);
