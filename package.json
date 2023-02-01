@@ -17,6 +17,9 @@
     "axios": "^1.2.1",
     "discord.js": "^14.7.1",
     "dotenv": "^16.0.1",
+    "node-cron": "^3.0.2",
+    "sequelize": "^6.28.0",
+    "sqlite3": "^5.1.4",
     "undici": "^5.14.0"
   }
 }

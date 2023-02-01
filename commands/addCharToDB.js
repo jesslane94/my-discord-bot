@@ -1,10 +1,10 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { EmbedBuilder } = require('discord.js');
+const Chars = require('../events/ready.js').Chars;
 
 module.exports = {
 	data: new SlashCommandBuilder()
-		.setName('searchcharacter')
-		.setDescription('searches for a characters birthday.')
+		.setName('addcharacter')
+		.setDescription('adds Character Info to Database.')
 		.addStringOption(option =>
 			option.setName('input')
 				.setDescription('the users inputted search term.')
@@ -59,27 +59,35 @@ module.exports = {
 				});
 		}
 
-		function handleData(data) {
+		async function handleData(data) {
 			const newData = JSON.stringify(data);
 			const myJSON = JSON.parse(newData);
 
-			const embed = new EmbedBuilder()
-				.setColor(0x0099FF)
-				.setTitle(myJSON.data.Character.name.full)
-				.setURL(myJSON.data.Character.siteUrl)
-				.setThumbnail(myJSON.data.Character.image.medium)
-				.addFields(
-					{ name: 'Date of Birth', value: `Month: ${myJSON.data.Character.dateOfBirth.month ?? 'N/A' }\nDay: ${myJSON.data.Character.dateOfBirth.day ?? 'N/A'}` },
-					{ name: 'Age', value: myJSON.data.Character.age ?? 'N/A' },
-					{ name: 'If you would like to add this character to the database, please input the character through the addCharToDB command!' },
-				)
-				.setTimestamp();
+			const charName = myJSON.data.Character.name.full ?? 'N/A';
+			const charMonth = myJSON.data.Character.dateOfBirth.month ?? 'N/A';
+			const charDay = myJSON.data.Character.dateOfBirth.day ?? 'N/A';
 
-			return interaction.reply({ embeds: [embed] });
+			try {
+				// equivalent to: INSERT INTO tags (name, description, username) values (?, ?, ?);
+				console.log(Chars);
+				const char = await Chars.create({
+					name: charName,
+					month: charMonth,
+					day: charDay,
+				});
+				return interaction.reply(`Character ${char.name} added to database.`);
+			}
+			catch (error) {
+				if (error.name === 'SequelizeUniqueConstraintError') {
+					return interaction.reply('That tag already exists.');
+				}
+				console.log(error);
+				return interaction.reply('Something went wrong with adding a tag.');
+			}
 		}
 
 		function handleError(error) {
 			console.error(error);
 		}
-
-	} };
+	},
+};
